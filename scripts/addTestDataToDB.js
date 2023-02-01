@@ -47,4 +47,3 @@ function insertMockedUsers() {
 }
 
 insertMockedUsers();
-// module.exports = { insertMockedUsers };

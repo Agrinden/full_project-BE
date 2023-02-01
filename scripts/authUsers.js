@@ -2,9 +2,7 @@ const { ObjectID } = require("bson");
 
 const MongoClient = require("mongodb").MongoClient;
 const url = "mongodb://localhost:27017";
-const index = require("../index");
 let dbase;
-let users;
 
 function insertAuthMockedUsers() {
   MongoClient.connect(
