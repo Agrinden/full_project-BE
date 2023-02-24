@@ -40,7 +40,7 @@ MongoClient.connect(
     if (err) {
       return console.log(err);
     }
-    dbase = client.db("Test2");
+    dbase = client.db("Onset_app");
     console.log(`MongoDB connected: ${url}`);
   }
 );
@@ -51,15 +51,44 @@ app.get("/", (req, res) => {
 
 app.get("/users", auth, async (req, res) => {
   dbase
-    .collection("users2")
+    .collection("collection_001")
     .find({})
     .toArray((err, result) => {
       res.send(result);
     });
 });
 
+app.post("/registration", async (req, res) => {
+  const data = await dbase.collection("registered-users");
+  const createdUser = await data.findOne({
+    name: req.body.name,
+  });
+  if (createdUser) {
+    res.status(409).json({
+      status: "Error",
+      message:
+        "A user with this name already exists. Please choose another one UserName",
+    });
+  } else if (!createdUser) {
+    data.insertOne({
+      name: req.body.name,
+      email: req.body.email,
+      password: req.body.password,
+    });
+    res.send({
+      status: "Success",
+      message: "Registration success",
+    });
+  } else {
+    res.status(404).json({
+      status: "Error",
+      message: "Something goes wrong. Try one more time!",
+    });
+  }
+});
+
 app.post("/login", async (req, res) => {
-  const data = await dbase.collection("auth-users");
+  const data = await dbase.collection("registered-users");
   const authUser = await data.findOne({
     name: req.body.name,
     password: req.body.password,
@@ -88,7 +117,7 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/users", auth, async (req, resp) => {
-  const data = await dbase.collection("users2");
+  const data = await dbase.collection("collection_001");
   const candidate = await data.findOne({ surName: req.body.surName });
   if (candidate) {
     resp.status(400).json({ status: "Error", message: "User already exsist" });
@@ -99,7 +128,7 @@ app.post("/users", auth, async (req, resp) => {
 });
 
 app.put("/users", auth, async (req, resp) => {
-  const data = await dbase.collection("users2");
+  const data = await dbase.collection("collection_001");
   const updatedUser = {
     _id: ObjectID(req.body._id),
     surName: req.body.surName,
@@ -118,7 +147,7 @@ app.delete("/users/:id", auth, (req, resp) => {
     surName: req.body.surName,
   };
   result = dbase
-    .collection("users2")
+    .collection("collection_001")
     .deleteOne({ _id: ObjectID(req.params.id) });
   resp.send(deletedUser);
 });
