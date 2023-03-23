@@ -97,12 +97,17 @@ app.post("/login", async (req, res) => {
     const token = jwt.sign(
       {
         name: authUser.name,
-        id: authUser.id,
+        _id: authUser._id,
       },
       "dev-jwt",
       { expiresIn: 60 * 60 }
     );
-    res.send({ status: "Success", jwtToken: token });
+    res.send({
+      _id: authUser._id,
+      name: req.body.name,
+      status: "Success",
+      jwtToken: token,
+    });
   } else {
     res
       .status(404)
@@ -114,6 +119,25 @@ app.post("/logout", (req, res) => {
   // очистить сессию
   req.session.destroy();
   res.send({ status: "Success" });
+});
+
+app.delete("/:id", auth, async (req, res) => {
+  const data = await dbase.collection("registered-users");
+  const deleteUser = await data.findOne({
+    _id: ObjectID(req.params.id),
+  });
+  if (!deleteUser) {
+    res
+      .send(404)
+      .json({ status: "Error", message: "The user with this id didn't find." });
+  } else {
+    data.deleteOne({
+      _id: ObjectID(req.params.id),
+    });
+    res
+      .status(200)
+      .json({ status: "Success", message: "The user have been deleted!" });
+  }
 });
 
 app.post("/users", auth, async (req, resp) => {
