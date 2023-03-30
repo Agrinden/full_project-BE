@@ -49,15 +49,6 @@ app.get("/", (req, res) => {
   res.send({ status: "Server is running" });
 });
 
-app.get("/users", auth, async (req, res) => {
-  dbase
-    .collection("collection_001")
-    .find({})
-    .toArray((err, result) => {
-      res.send(result);
-    });
-});
-
 app.post("/registration", async (req, res) => {
   const data = await dbase.collection("registered-users");
   const createdUser = await data.findOne({
@@ -69,11 +60,23 @@ app.post("/registration", async (req, res) => {
       message:
         "A user with this name already exists. Please choose another one UserName",
     });
+  } else if (!createdUser && req.body.name === "Alex") {
+    data.insertOne({
+      name: req.body.name,
+      email: req.body.email,
+      password: req.body.password,
+      role: "Owner",
+    });
+    res.send({
+      status: "Success",
+      message: "Registration success",
+    });
   } else if (!createdUser) {
     data.insertOne({
       name: req.body.name,
       email: req.body.email,
       password: req.body.password,
+      role: "User",
     });
     res.send({
       status: "Success",
@@ -107,11 +110,41 @@ app.post("/login", async (req, res) => {
       name: req.body.name,
       status: "Success",
       jwtToken: token,
+      role: authUser.role,
     });
   } else {
     res
       .status(404)
       .json({ status: "Error", message: "You're not registered user" });
+  }
+});
+
+app.get("/authUsers", auth, (req, res) => {
+  dbase
+    .collection("registered-users")
+    .find({})
+    .toArray((err, result) => {
+      res.send(result);
+    });
+});
+
+app.put("/adminpanel/changerole", auth, async (req, res) => {
+  const data = await dbase.collection("registered-users");
+
+  let choosenUser = await data.findOne({
+    _id: ObjectID(req.body._id),
+  });
+  if (!choosenUser) {
+    res.send(404).json({
+      status: "Error",
+      message: "The user with this id didn't find.",
+    });
+  } else {
+    data.updateOne(choosenUser, { $set: { role: req.body.role } });
+    res.send({
+      status: "Success",
+      message: "The user role have been changed!",
+    });
   }
 });
 
@@ -138,6 +171,15 @@ app.delete("/:id", auth, async (req, res) => {
       .status(200)
       .json({ status: "Success", message: "The user have been deleted!" });
   }
+});
+
+app.get("/users", auth, (req, res) => {
+  dbase
+    .collection("collection_001")
+    .find({})
+    .toArray((err, result) => {
+      res.send(result);
+    });
 });
 
 app.post("/users", auth, async (req, resp) => {
