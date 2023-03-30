@@ -128,6 +128,26 @@ app.get("/authUsers", auth, (req, res) => {
     });
 });
 
+app.put("/adminpanel/changerole", auth, async (req, res) => {
+  const data = await dbase.collection("registered-users");
+
+  let choosenUser = await data.findOne({
+    _id: ObjectID(req.body._id),
+  });
+  if (!choosenUser) {
+    res.send(404).json({
+      status: "Error",
+      message: "The user with this id didn't find.",
+    });
+  } else {
+    data.updateOne(choosenUser, { $set: { role: req.body.role } });
+    res.send({
+      status: "Success",
+      message: "The user role have been changed!",
+    });
+  }
+});
+
 app.post("/logout", (req, res) => {
   // очистить сессию
   req.session.destroy();
