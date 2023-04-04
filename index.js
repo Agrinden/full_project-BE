@@ -101,6 +101,7 @@ app.post("/login", async (req, res) => {
       {
         name: authUser.name,
         _id: authUser._id,
+        role: authUser.role,
       },
       "dev-jwt",
       { expiresIn: 60 * 60 }
@@ -128,9 +129,23 @@ app.get("/authUsers", auth, (req, res) => {
     });
 });
 
-app.put("/adminpanel/changerole", auth, async (req, res) => {
+app.post("/authUser", auth, async (req, res) => {
   const data = await dbase.collection("registered-users");
+  let authUser = await data.findOne({
+    _id: ObjectID(req.body._id),
+  });
+  if (!authUser) {
+    res.status(404).json({
+      status: "Error",
+      message: "The user don't find.",
+    });
+  } else {
+    res.send(authUser);
+  }
+});
 
+app.put("/authUser", auth, async (req, res) => {
+  const data = await dbase.collection("registered-users");
   let choosenUser = await data.findOne({
     _id: ObjectID(req.body._id),
   });
@@ -146,12 +161,6 @@ app.put("/adminpanel/changerole", auth, async (req, res) => {
       message: "The user role have been changed!",
     });
   }
-});
-
-app.post("/logout", (req, res) => {
-  // очистить сессию
-  req.session.destroy();
-  res.send({ status: "Success" });
 });
 
 app.delete("/:id", auth, async (req, res) => {
@@ -172,6 +181,14 @@ app.delete("/:id", auth, async (req, res) => {
       .json({ status: "Success", message: "The user have been deleted!" });
   }
 });
+
+app.post("/logout", (req, res) => {
+  // очистить сессию
+  req.session.destroy();
+  res.send({ status: "Success" });
+});
+
+//Main Page
 
 app.get("/users", auth, (req, res) => {
   dbase
